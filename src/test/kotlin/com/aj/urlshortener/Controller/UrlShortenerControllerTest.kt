@@ -1,7 +1,6 @@
 package com.aj.urlshortener.Controller
 
 import com.aj.urlshortener.datatransferobject.UrlRequestDto
-import com.aj.urlshortener.datatransferobject.UrlResponseDto
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -35,15 +34,11 @@ internal class UrlShortenerControllerTest @Autowired constructor(
             val newUrlRequestDto = UrlRequestDto("http://www.google.com",
                 LocalDateTime.parse("2022-08-26T19:37:59.557") )
 
-            val newUrl = UrlResponseDto("http://www.google.com",
-                "f8ff5ab0",
-                LocalDateTime.parse("2022-08-26T19:37:59.557") )
-
             //then
             /* only checking for successful creation response as  everytime it will return a
                 newly generated short url.
              */
-            mockMvc.post(baseUrl+"/create") {
+            mockMvc.post("$baseUrl/create") {
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(newUrlRequestDto)
                 }
@@ -59,7 +54,7 @@ internal class UrlShortenerControllerTest @Autowired constructor(
             val newUrlRequestDto = UrlRequestDto("  ",
                 LocalDateTime.parse("2022-08-26T19:37:59.557") )
 
-            mockMvc.post(baseUrl+"/create") {
+            mockMvc.post("$baseUrl/create") {
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(newUrlRequestDto)
             }
@@ -75,7 +70,7 @@ internal class UrlShortenerControllerTest @Autowired constructor(
             val newUrlRequestDto = UrlRequestDto("ww.",
                 LocalDateTime.parse("2022-08-26T19:37:59.557") )
 
-            mockMvc.post(baseUrl+"/create") {
+            mockMvc.post("$baseUrl/create") {
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(newUrlRequestDto)
             }
@@ -91,7 +86,7 @@ internal class UrlShortenerControllerTest @Autowired constructor(
             val newUrlRequestDto = UrlRequestDto("http://www.google.com",
                 LocalDateTime.parse("2022-07-26T19:37:59.557") )
 
-            mockMvc.post(baseUrl+"/create") {
+            mockMvc.post("$baseUrl/create") {
                 contentType = MediaType.APPLICATION_JSON
                 content = objectMapper.writeValueAsString(newUrlRequestDto)
             }
@@ -127,7 +122,7 @@ internal class UrlShortenerControllerTest @Autowired constructor(
             //given
             val shortUrl = "f8ff5ab021"
             //when
-            val result = mockMvc.get("$baseUrl/$shortUrl")
+            mockMvc.get("$baseUrl/$shortUrl")
                 .andDo { print() }
                 .andExpect {
                     status { isNotFound() }
@@ -139,7 +134,7 @@ internal class UrlShortenerControllerTest @Autowired constructor(
             //given
             val shortUrl = "  "
             //when
-            val result = mockMvc.get("$baseUrl/$shortUrl")
+            mockMvc.get("$baseUrl/$shortUrl")
                 .andDo { print() }
                 .andExpect {
                     status { isBadRequest() }
@@ -151,7 +146,7 @@ internal class UrlShortenerControllerTest @Autowired constructor(
             //given
             val shortUrl = "5abd77b4"
             //when
-            val result = mockMvc.get("$baseUrl/$shortUrl")
+            mockMvc.get("$baseUrl/$shortUrl")
                 .andDo { print() }
                 .andExpect {
                     status { isBadRequest() }

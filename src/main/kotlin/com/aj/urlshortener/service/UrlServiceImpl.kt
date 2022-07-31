@@ -1,10 +1,7 @@
 package com.aj.urlshortener.service
 
 import com.aj.urlshortener.datatransferobject.UrlRequestDto
-import com.aj.urlshortener.exception.EmptyInputException
-import com.aj.urlshortener.exception.ExpiredUrlException
-import com.aj.urlshortener.exception.InvalidInputException
-import com.aj.urlshortener.exception.UrlNotFoundException
+import com.aj.urlshortener.exception.*
 import com.aj.urlshortener.model.Url
 import com.aj.urlshortener.repository.UrlRepository
 import com.google.common.hash.Hashing
@@ -14,6 +11,7 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.time.LocalDateTime
+import java.util.Optional
 
 @Service
 class UrlServiceImpl constructor ( @Autowired val urlRepository: UrlRepository ) : UrlService {
@@ -28,7 +26,7 @@ class UrlServiceImpl constructor ( @Autowired val urlRepository: UrlRepository )
         if( urlRequestDto.expirationDate != null ){
             val expirationDate: LocalDateTime = urlRequestDto.expirationDate
             if( expirationDate.isBefore(LocalDateTime.now()))
-                throw InvalidInputException("Expiration Date cannot be in past.")
+                throw InvalidInputException("Expiration Date cannot be in past")
         }
 
         //To generate shortUrl from the provided Long Url
@@ -46,14 +44,14 @@ class UrlServiceImpl constructor ( @Autowired val urlRepository: UrlRepository )
 
     @Cacheable(value= ["Url"], key="#shortUrl")
     override fun getLongUrl(shortUrl: String): String {
-        if(shortUrl.isNullOrBlank()) throw EmptyInputException("URL is empty");
+        if(shortUrl.isNullOrBlank()) throw EmptyInputException("Url is empty");
 
         println("Going to hit the database")
         val urlObject = urlRepository.findByShortUrl(shortUrl)
-            .orElseThrow{ throw UrlNotFoundException("Url records not found in the database. Kindly generate short url and try again.") }
+            .orElseThrow{ throw UrlNotFoundException("Url records not found in the database. Kindly generate short url and try again") }
 
         if(urlObject.expirationDate.isBefore(LocalDateTime.now()))
-            throw ExpiredUrlException("Url expired. Generate a new short url.")
+            throw ExpiredUrlException("Url expired. Generate a new short url")
 
         return urlObject.longUrl
     }
@@ -63,6 +61,21 @@ class UrlServiceImpl constructor ( @Autowired val urlRepository: UrlRepository )
         val currentTime = LocalDateTime.now()
         encodedUrl = Hashing.murmur3_32_fixed()
             .hashString( longUrl + currentTime.toString(), StandardCharsets.UTF_8).toString()
+
+        // The below commented logic is to check the generated short url already exists in database, if yes then generate a new one.
+        // It might consume time and lead to performance issues.
+        /*
+        while (true){
+            encodedUrl = Hashing.murmur3_32_fixed()
+                .hashString( longUrl + currentTime.toString(), StandardCharsets.UTF_8).toString()
+
+            val urlInRepo: Optional<Url>  = urlRepository.findByShortUrl(encodedUrl)
+            if( urlInRepo.isEmpty ){
+                break;
+            }
+        }
+         */
+
         return encodedUrl
     }
 
